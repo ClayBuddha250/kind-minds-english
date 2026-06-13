@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Logback 日志配置文件。
+    文件名必须是 logback-spring.xml，Spring Boot 才会自动加载。
+    通过 <property> 定义变量，通过 <appender> 定义输出位置，通过 <logger> 控制级别。
+-->
+<configuration>
+    <!-- 引入 Spring Boot 默认的日志基础配置 -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!--
+        定义日志文件路径。
+        ${LOG_FILE} 先取系统属性 LOG_FILE，没有则取 LOG_PATH，再没有则取 LOG_TEMP，
+        最后都未设置时，使用系统临时目录下的 spring.log。
+    -->
+    <property name="LOG_FILE" value="${LOG_FILE:-${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}}/spring.log}"/>
+
+    <!--
+        定义日志输出格式。
+        %d{...}：日期时间
+        [%thread]：线程名
+        %-5level：日志级别（左对齐，固定5字符宽度）
+        %logger{36}：Logger 名称（最多36个字符）
+        %msg：日志消息
+        %n：换行
+    -->
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
+
+    <!-- 控制台输出 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- RollingFileAppender 把日志写入文件，并按时间和大小自动归档 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE}</file>
+
+        <!-- 滚动策略：按天 + 按文件大小滚动 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- 归档文件名格式：logs/app-2026-06-14.0.log -->
+            <fileNamePattern>logs/app-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <!-- 单个日志文件最大 10MB，超过就切到下一个文件（%i 递增） -->
+            <maxFileSize>10MB</maxFileSize>
+            <!-- 保留最近 30 天的日志 -->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 所有日志默认级别是 INFO，并输出到控制台和文件 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+    <!-- 项目代码包，级别设为 DEBUG，开发时能看到更详细的信息 -->
+    <logger name="org.example.kindmindsenglish" level="DEBUG"/>
+</configuration>
