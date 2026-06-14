@@ -2,6 +2,7 @@ package org.example.kindmindsenglish.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.example.kindmindsenglish.dto.response.auth.LoginResponse;
+import org.example.kindmindsenglish.dto.response.auth.UserResponse;
 import org.example.kindmindsenglish.dto.response.user.MeResponse;
 import org.example.kindmindsenglish.entity.User;
 import org.example.kindmindsenglish.exception.BusinessException;
@@ -45,10 +46,10 @@ public class UserService {
      * @param username    用户显示名，不能为空
      * @param email       登录邮箱，不能为空且唯一
      * @param rawPassword 明文密码，不能为空（至少6位由 Controller 校验）
-     * @return 保存成功的用户实体（含自增ID）
+     * @return 保存成功的用户响应体（含自增ID）
      * @throws BusinessException 邮箱已被注册时抛出
      */
-    public User register(String username, String email, String rawPassword) {
+    public UserResponse register(String username, String email, String rawPassword) {
         // 检查邮箱唯一性
         if (userRepository.existsByEmail(email)) {
             log.warn("注册失败：邮箱已被注册，email={}", email);
@@ -63,10 +64,18 @@ public class UserService {
         user.setRole(0);   // 0 = 普通用户
         user.setStatus(1); // 1 = 有效用户
 
-        // 持久化并返回
+        // 持久化
         User savedUser = userRepository.save(user);
+
+        // 组装响应体
+        UserResponse userResponse = new UserResponse();
+        userResponse.setId(savedUser.getId());
+        userResponse.setUsername(savedUser.getUsername());
+        userResponse.setEmail(savedUser.getEmail());
+        userResponse.setRole(savedUser.getRole());
+        userResponse.setStatus(savedUser.getStatus());
         log.info("用户注册成功：id={}, username={}, email={}", savedUser.getId(), username, email);
-        return savedUser;
+        return userResponse;
     }
 
     /**
@@ -108,6 +117,29 @@ public class UserService {
 
         log.info("用户登录成功：id={}, email={}", user.getId(), email);
         return new LoginResponse(accessToken, refreshToken, jwtUtil.getAccessTokenExpirationSeconds());
+    }
+
+    /**
+     * 刷新令牌：验证 refreshToken，生成新的 accessToken 和 refreshToken。
+     *
+     * @param refreshToken 原刷新令牌
+     * @return 包含新 accessToken、新 refreshToken、expiresIn 的响应对象
+     * @throws BusinessException 刷新令牌无效或过期时抛出
+     */
+    public LoginResponse refresh(String refreshToken) {
+        if (!jwtUtil.validateToken(refreshToken)) {
+            throw new BusinessException(10004, "刷新令牌无效或已过期");
+        }
+
+        Long userId = jwtUtil.getUserIdFromToken(refreshToken);
+        String email = jwtUtil.getEmailFromToken(refreshToken);
+        Integer role = jwtUtil.getRoleFromToken(refreshToken);
+
+        String newAccessToken = jwtUtil.generateAccessToken(userId, email, role);
+        String newRefreshToken = jwtUtil.generateRefreshToken(userId, email);
+
+        log.info("用户刷新令牌成功：userId={}, email={}", userId, email);
+        return new LoginResponse(newAccessToken, newRefreshToken, jwtUtil.getAccessTokenExpirationSeconds());
     }
 
     /**

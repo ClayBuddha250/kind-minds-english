@@ -62,6 +62,7 @@ public class SecurityConfig {
                 // 请求授权
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()   // 注册、登录、刷新放行
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")   // 只有管理员能访问
                         .anyRequest().authenticated()                     // 其他全部需要认证
                 )
                 // 将 JWT 过滤器放在 UsernamePasswordAuthenticationFilter 之前

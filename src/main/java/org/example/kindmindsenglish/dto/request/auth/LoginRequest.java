@@ -1,4 +1,4 @@
-package org.example.kindmindsenglish.dto.request;
+package org.example.kindmindsenglish.dto.request.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -7,7 +7,7 @@ import lombok.Data;
 
 /**
  * <p>
- * 用户注册请求体。前端提交注册表单时传入此对象。
+ * 用户登录请求体。前端提交登录表单时传入此对象。
  * 使用 JSR-303 注解进行基础参数校验。
  * </p>
  *
@@ -15,13 +15,7 @@ import lombok.Data;
  * @since 2026-06-14
  */
 @Data
-public class RegisterRequest {
-
-    /**
-     * 用户显示名，不能为空。
-     */
-    @NotBlank(message = "用户名不能为空")
-    private String username;
+public class LoginRequest {
 
     /**
      * 登录邮箱，不能为空，必须符合邮箱格式。

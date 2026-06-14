@@ -146,3 +146,39 @@
 | accessToken  | String  | JWT 访问令牌，用于调用需要认证的接口                     |
 | refreshToken | String  | 刷新令牌，用于在 accessToken 过期后获取新的令牌           |
 | expiresIn    | Integer | accessToken 的有效时长（秒），示例中为 1800 秒 = 30 分钟 |
+
+## 3 用户认证刷新
+
+### 基本信息
+- **路径**: POST /api/v1/auth/refresh
+- **描述**: 在refreshToken有效的情况下，更新用户的accessToken和refreshToken
+- **认证**: 无需认证
+
+### Request
+```json
+{
+    "refreshToken": "string, 必填"
+}
+```
+
+### Response 200 (成功)
+```json
+{
+    "code": 200,
+    "message": "success",
+    "data": {
+        "accessToken": "新的 JWT 访问令牌",
+        "refreshToken": "新的刷新令牌",
+        "expiresIn": 1800
+    }
+}
+```
+
+### Response 10004 (刷新令牌无效或过期)
+```json
+{
+    "code": 10004,
+    "message": "刷新令牌无效或已过期",
+    "data": null
+}
+```

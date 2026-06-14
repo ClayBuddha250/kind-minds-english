@@ -1,11 +1,11 @@
 package org.example.kindmindsenglish.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.example.kindmindsenglish.dto.request.LoginRequest;
-import org.example.kindmindsenglish.dto.request.RegisterRequest;
+import org.example.kindmindsenglish.dto.request.auth.LoginRequest;
+import org.example.kindmindsenglish.dto.request.auth.RefreshRequest;
+import org.example.kindmindsenglish.dto.request.auth.RegisterRequest;
 import org.example.kindmindsenglish.dto.response.auth.LoginResponse;
 import org.example.kindmindsenglish.dto.response.auth.UserResponse;
-import org.example.kindmindsenglish.entity.User;
 import org.example.kindmindsenglish.service.UserService;
 import org.example.kindmindsenglish.util.Result;
 import jakarta.validation.Valid;
@@ -39,21 +39,13 @@ public class AuthController {
     @PostMapping("/register")
     public Result<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
         log.debug("收到注册请求：username={}, email={}", request.getUsername(), request.getEmail());
-        User user = userService.register(
+        UserResponse response = userService.register(
                 request.getUsername(),
                 request.getEmail(),
                 request.getPassword()
         );
 
-        // 组装响应体
-        UserResponse response = new UserResponse();
-        response.setId(user.getId());
-        response.setUsername(user.getUsername());
-        response.setEmail(user.getEmail());
-        response.setRole(user.getRole());
-        response.setStatus(user.getStatus());
-
-        log.debug("注册响应：id={}", user.getId());
+        log.debug("注册响应：id={}", response.getId());
         return Result.success(response);
     }
 
@@ -70,5 +62,16 @@ public class AuthController {
         LoginResponse loginResponse = userService.login(request.getEmail(), request.getPassword());
         log.debug("登录响应: email={}", request.getEmail());
         return Result.success(loginResponse);
+    }
+
+    /**
+     * 用户刷新令牌
+     * @param request 刷新请求体，包含refreshToken
+     * @return 新的登录令牌信息
+     */
+    @PostMapping("/refresh")
+    public Result<LoginResponse> refresh(@Valid @RequestBody RefreshRequest request) {
+        LoginResponse response = userService.refresh(request.getRefreshToken());
+        return Result.success(response);
     }
 }

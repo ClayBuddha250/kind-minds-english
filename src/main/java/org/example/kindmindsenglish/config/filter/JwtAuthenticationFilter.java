@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.example.kindmindsenglish.config.UserDetailsImpl;
 import org.example.kindmindsenglish.util.JwtUtil;
 import org.jspecify.annotations.NonNull;
@@ -25,6 +26,7 @@ import java.io.IOException;
  * @author ClayBuddha250
  * @since 2026-06-14
  */
+@Slf4j
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -83,6 +85,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
             // 如果令牌无效，不设置 Authentication，后续的授权检查将拒绝请求
+            log.debug("JWTFilter校验令牌无效:{}", token);
         }
 
         // 无论是否成功解析令牌，都继续执行后续过滤器链
