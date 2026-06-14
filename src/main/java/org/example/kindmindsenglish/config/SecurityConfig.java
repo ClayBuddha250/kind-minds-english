@@ -1,13 +1,16 @@
 package org.example.kindmindsenglish.config;
 
+import org.example.kindmindsenglish.config.filter.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * <p>
@@ -32,22 +35,38 @@ public class SecurityConfig {
     }
 
     /**
-     * 安全过滤链（临时配置）。
-     * 放行所有 /api/v1/auth/** 下的请求，允许注册和登录。
-     * 后续引入 JWT 后再改成仅对部分路径进行认证。
+     * 安全过滤链。
+     * 1. 关闭 CSRF（前后端分离 + JWT 无需此防护）。
+     * 2. 设置无状态会话（不创建 HttpSession）。
+     * 3. 放行注册、登录、刷新令牌接口。
+     * 4. 其余所有请求都需要认证。
+     * 5. 将自定义的 JWT 过滤器添加到 UsernamePasswordAuthenticationFilter 之前。
      */
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) {
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) {
         http
-                // 临时关闭 CSRF（开发阶段，否则 POST 请求会被拦截）
+                // 关闭 CSRF
                 .csrf(AbstractHttpConfigurer::disable)
-                // 配置请求授权
+                // 无状态会话
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                // 401认证失败错误处理
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.setStatus(401);
+                            response.getWriter().write("{\"code\":401,\"message\":\"未认证或 token 无效\",\"data\":null}");
+                        })
+                )
+                // 请求授权
                 .authorizeHttpRequests(auth -> auth
-                        // 放行认证相关接口
-                        .requestMatchers("/api/v1/auth/**").permitAll()
-                        // 其他所有请求暂时也放行（后续改为需要认证）
-                        .anyRequest().permitAll()
-                );
+                        .requestMatchers("/api/v1/auth/**").permitAll()   // 注册、登录、刷新放行
+                        .anyRequest().authenticated()                     // 其他全部需要认证
+                )
+                // 将 JWT 过滤器放在 UsernamePasswordAuthenticationFilter 之前
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 }

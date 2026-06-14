@@ -1,4 +1,4 @@
-package org.example.kindmindsenglish.dto.response;
+package org.example.kindmindsenglish.dto.response.auth;
 
 import lombok.Data;
 

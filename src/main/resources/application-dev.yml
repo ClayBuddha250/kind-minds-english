@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/kind_minds_english?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8
+    url: jdbc:mysql://localhost:3306/kind_minds_english?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -8,3 +8,8 @@ spring:
     hibernate:
       ddl-auto: none
     show-sql: true
+# JWT 配置
+jwt:
+  secret: YourSuperSecretKeyForJWT_MustBeAtLeast256BitsLong # 签名密钥,用于生成和验证 JWT 的签名
+  expiration: 1800000       # accessToken 有效期（毫秒）,这里 30 分钟,控制登录成功后,返回的 accessToken 在多长时间内有效
+  refresh-expiration: 604800000  # refreshToken 有效期（毫秒）,这里 7 天,控制 refreshToken 的存活时间，用于在 accessToken 过期后免密续签
